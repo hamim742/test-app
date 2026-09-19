@@ -325,7 +325,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Google Login Handler (Using real Google OAuth token or Google user profile payload)
   const loginWithGoogle = async (googleData?: { idToken?: string; email?: string; name?: string; avatar?: string }): Promise<AuthResponse> => {
     try {
-      const response = await fetch(`${getApiBaseUrl()}/auth/google-login`, {
+      const apiUrl = `${getApiBaseUrl()}/auth/google-login`;
+      console.log('[Auth] Attempting Google login at:', apiUrl);
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -336,8 +338,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }),
       });
 
-      const data = await response.json();
-      if (response.ok && data.success && data.data) {
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        console.error('Failed to parse response as JSON:', jsonErr);
+        return { success: false, message: `সার্ভার এরর (HTTP ${response.status})` };
+      }
+
+      if (response.ok && data?.success && data?.data) {
         const userData: User = {
           id: data.data.user.id,
           name: data.data.user.name,
@@ -350,7 +359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         saveSession(userData, data.data.accessToken);
         return { success: true, message: data.message, user: userData };
       } else {
-        return { success: false, message: data.message || 'গুগল সাইন-ইন ব্যর্থ হয়েছে (Google Sign In Failed)' };
+        return { success: false, message: data?.message || 'গুগল সাইন-ইন ব্যর্থ হয়েছে (Google Sign In Failed)' };
       }
     } catch (error: any) {
       console.error('Google Sign In Network Error:', error);
