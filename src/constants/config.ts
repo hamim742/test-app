@@ -5,19 +5,24 @@ import Constants from 'expo-constants';
 // - On Android Emulator: 'http://10.0.2.2:5042/api/v1' is used as a fallback.
 // - On physical Android/iOS devices running via Expo Go: it automatically extracts the computer's local IP address.
 export const getDynamicLocalUrl = () => {
-  const hostUri = Constants.expoConfig?.hostUri || '';
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any).expoGoConfig?.debuggerHost ||
+    (Constants as any).manifest?.debuggerHost ||
+    (Constants as any).manifest2?.extra?.expoGo?.debuggerHost ||
+    '';
   const ip = hostUri.split(':')[0];
-  if (ip) {
+  if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
     return `http://${ip}:5042/api/v1`;
   }
   return Platform.OS === 'android' ? 'http://10.0.2.2:5042/api/v1' : 'http://localhost:5042/api/v1';
 };
 
 // Toggle between LOCAL development and PRODUCTION server by commenting/uncommenting:
-// export const API_BASE_URL = getDynamicLocalUrl(); // For Local Development (Auto-resolves your computer's IP)
+export const API_BASE_URL = getDynamicLocalUrl(); // ✅ For Local Development (Auto-resolves your computer's IP or emulator localhost)
 // export const API_BASE_URL = 'http://52.221.243.198:5042/api/v1'; // Direct IP (HTTP fallback)
 // export const API_BASE_URL = 'https://chess-colleagues-provide-advertisements.trycloudflare.com/api/v1'; // Temporary Cloudflare (changes on restart)
-export const API_BASE_URL = 'https://api.hamim.dpdns.org/api/v1'; // ✅ Permanent HTTPS via Cloudflare Named Tunnel
+// export const API_BASE_URL = 'https://api.hamim.dpdns.org/api/v1'; // Permanent HTTPS via Cloudflare Named Tunnel
 
 // Google OAuth Web Client ID for Authentication configuration.
 export const GOOGLE_WEB_CLIENT_ID = '673489189699-a6qgd0b9uuf1f1at8m5a7ao5nc358gc3.apps.googleusercontent.com';
